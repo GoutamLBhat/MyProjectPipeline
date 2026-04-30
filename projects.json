@@ -38,7 +38,7 @@
       "title": "Multi-Agent Research & Blog System",
       "description": "An autonomous AI agent pipeline built with CrewAI that coordinates specialized agents to perform deep web research and synthesize high-quality technical blog posts, significantly reducing content creation cycles.",
       "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995",
-      "link": "https://github.com/GoutamLBhat/MyProjectPipeline",
+      "link": "https://github.com/GoutamLBhat/research_and_blog_crew",
       "tags": [
           "CrewAI",
           "Python",
