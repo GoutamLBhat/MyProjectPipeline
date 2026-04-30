@@ -35,11 +35,16 @@
 
   "projects": [
     {
-      "title": "AI Incident Manager",
-      "description": "AI-powered incident detection and triage system that automatically identifies, classifies, and escalates critical events in real time — reducing MTTR by 60%.",
-      "image": "https://picsum.photos/seed/incident/600/400",
-      "link": "https://github.com/yourprofile",
-      "tags": ["Python", "LangChain", "FastAPI"]
+      "title": "Multi-Agent Research & Blog System",
+      "description": "An autonomous AI agent pipeline built with CrewAI that coordinates specialized agents to perform deep web research and synthesize high-quality technical blog posts, significantly reducing content creation cycles.",
+      "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995",
+      "link": "https://github.com/GoutamLBhat/MyProjectPipeline",
+      "tags": [
+          "CrewAI",
+          "Python",
+          "Multi-Agent Systems",
+          "LLMs"
+      ]
     },
     {
       "title": "Workflow Automation Bot",
