@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Goutam Bhat — AI & Automation Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cabinet+Grotesk:wght@400;500;700;800;900&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NOISE OVERLAY -->
+  <div class="noise"></div>
+
+  <!-- CURSOR -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-trail" id="cursorTrail"></div>
+
+  <!-- NAVBAR -->
+  <header class="nav" id="nav">
+    <div class="logo">
+      <span class="logo-bracket">[</span>GB<span class="logo-bracket">]</span>
+    </div>
+    <nav class="nav-links">
+      <a href="#about">About</a>
+      <a href="#projects">Work</a>
+      <a href="#knowledge">Learn</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <div class="nav-right">
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span id="statusText">Available for work</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon sun">☀</span>
+        <span class="theme-icon moon">◑</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="hero-tag animate-in" style="--delay:0.1s" id="heroTag">Automation & AI Engineer</div>
+      <h1 class="hero-title animate-in" style="--delay:0.2s" id="heroTitle">
+        Building<br><em>Intelligent</em><br>Systems
+      </h1>
+      <p class="hero-sub animate-in" style="--delay:0.4s" id="heroSub">
+        5+ years designing AI-driven automation,<br>
+        intelligent bots, and scalable applications<br>
+        that solve real-world problems.
+      </p>
+      <div class="hero-ctas animate-in" style="--delay:0.55s">
+        <a href="#projects" class="btn-primary">See My Work</a>
+        <a href="#contact" class="btn-ghost">Get in Touch</a>
+      </div>
+    </div>
+
+    <div class="hero-right animate-in" style="--delay:0.3s">
+      <div class="profile-card">
+        <div class="profile-img-wrap">
+          <img src="profile.jpg" alt="Goutam Bhat" onerror="this.style.display='none';document.querySelector('.profile-initials').style.display='flex'">
+          <div class="profile-initials">GB</div>
+        </div>
+        <div class="profile-info">
+          <h3 id="profileName">Goutam Laxminarayan Bhat</h3>
+          <p id="profileTitle">AI & Automation Engineer</p>
+        </div>
+        <div class="profile-tags" id="profileTags">
+          <span>Python</span><span>LangChain</span><span>n8n</span><span>FastAPI</span>
+        </div>
+        <div class="profile-stat-row" id="profileStats">
+          <div class="profile-stat"><strong>5+</strong><span>Years Exp.</span></div>
+          <div class="profile-stat"><strong>20+</strong><span>Projects</span></div>
+          <div class="profile-stat"><strong>10+</strong><span>Clients</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="section about-section">
+    <div class="section-label">// About</div>
+    <div class="about-grid reveal">
+      <div class="about-text">
+        <h2 id="aboutHeadline">I build systems that<br><em>think and act</em></h2>
+        <div id="aboutParagraphs">
+          <p>I specialize in AI-driven automation systems and enterprise-grade solutions.</p>
+        </div>
+      </div>
+      <div class="skills-grid" id="skillsGrid">
+        <!-- Populated from JSON -->
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects" class="section projects-section">
+    <div class="section-label">// Selected Work</div>
+    <div class="projects-header">
+      <h2>Things I've built</h2>
+      <span class="project-count" id="projectCount">—</span>
+    </div>
+    <div id="projectsContainer" class="projects-grid"></div>
+  </section>
+
+  <!-- KNOWLEDGE CENTER -->
+  <section id="knowledge" class="section knowledge-section">
+    <div class="section-label">// Knowledge Center</div>
+    <div class="knowledge-header">
+      <h2>Fixes, Tricks &amp; Updates</h2>
+      <p class="knowledge-sub">Issues I've solved, tips I've discovered, and tools worth knowing about.</p>
+    </div>
+    <div class="knowledge-filters" id="knowledgeFilters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="Fix">Fixes</button>
+      <button class="filter-btn" data-filter="Trick">Tricks</button>
+      <button class="filter-btn" data-filter="Update">Updates</button>
+    </div>
+    <div id="knowledgeContainer" class="knowledge-grid"></div>
+  </section>
+
+  <!-- POST MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-meta">
+        <span class="post-category" id="modalCategory"></span>
+        <span class="modal-date" id="modalDate"></span>
+      </div>
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-tags" id="modalTags"></div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <section id="contact" class="section contact-section">
+    <div class="section-label">// Contact</div>
+    <div class="contact-inner reveal">
+      <h2>Let's build<br><em>something</em></h2>
+      <p>Have a problem that needs automation or AI? I'd love to hear about it.</p>
+      <div class="contact-links" id="contactLinks">
+        <!-- Populated from JSON -->
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span id="footerName">© 2025 Goutam Bhat</span>
+    <span>Built with intention.</span>
+  </footer>
+
+<script src="script.js"></script>
+</body>
+</html>

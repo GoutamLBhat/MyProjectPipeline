@@ -1,0 +1,115 @@
+{
+  "___INSTRUCTIONS___": "Edit each section below independently. All sections are optional. Follow the format exactly.",
+
+  "profile": {
+    "name": "Goutam Laxminarayan Bhat",
+    "title": "AI & Automation Engineer",
+    "tagline": "Automation & AI Engineer",
+    "hero_headline": ["Building", "Intelligent", "Systems"],
+    "hero_sub": "5+ years designing AI-driven automation, intelligent bots, and scalable applications that solve real-world problems.",
+    "stats": [
+      { "value": "5+", "label": "Years Exp." },
+      { "value": "20+", "label": "Projects" },
+      { "value": "4+", "label": "Clients" }
+    ],
+    "tech_tags": ["Python", "LangChain", "n8n", "AutomationAnywhere"],
+    "status": "Available for work",
+    "email": "goutamdhogaleec@gmail.com",
+    "github": "https://github.com/GoutamLBhat",
+    "linkedin": "https://www.linkedin.com/in/goutam-bhat"
+  },
+
+  "about": {
+    "headline": ["I build systems that", "think and act"],
+    "paragraphs": [
+      "I specialize in AI-driven automation systems and enterprise-grade solutions. My work focuses on reducing manual effort, improving efficiency, and delivering scalable products across industries.",
+      "From intelligent incident managers to end-to-end workflow automation — if it can be automated or made smarter, I'll build it."
+    ],
+    "skills": [
+      { "icon": "⚡", "title": "Automation", "detail": "n8n, AutomationAnywhere, custom bots" },
+      { "icon": "🧠", "title": "AI / ML",    "detail": "LangChain, OpenAI, RAG" },
+      { "icon": "🔧", "title": "Backend",    "detail": "Python" },
+      { "icon": "☁️", "title": "Cloud",      "detail": "Azure" }
+    ]
+  },
+
+  "projects": [
+    {
+      "title": "AI Incident Manager",
+      "description": "AI-powered incident detection and triage system that automatically identifies, classifies, and escalates critical events in real time — reducing MTTR by 60%.",
+      "image": "https://picsum.photos/seed/incident/600/400",
+      "link": "https://github.com/yourprofile",
+      "tags": ["Python", "LangChain", "FastAPI"]
+    },
+    {
+      "title": "Workflow Automation Bot",
+      "description": "End-to-end automation pipeline connecting 12+ enterprise tools — eliminating 40+ hours of manual work per week across teams.",
+      "image": "https://picsum.photos/seed/automation/600/400",
+      "link": "https://github.com/yourprofile",
+      "tags": ["n8n", "Node.js", "REST APIs"]
+    },
+    {
+      "title": "RAG Knowledge Engine",
+      "description": "Retrieval-augmented generation system that lets teams query internal documentation with natural language — built on top of OpenAI and Pinecone.",
+      "image": "https://picsum.photos/seed/rag/600/400",
+      "link": "https://github.com/yourprofile",
+      "tags": ["RAG", "OpenAI", "Pinecone"]
+    }
+  ],
+
+  "knowledge_center": [
+    {
+      "id": "post-001",
+      "date": "2025-07-01",
+      "category": "Fix",
+      "title": "LangChain memory not persisting across sessions",
+      "summary": "ConversationBufferMemory resets on every new chain call when not properly linked. Here's how to persist it using Redis or a simple file backend.",
+      "body": [
+        "When using `ConversationBufferMemory` in LangChain, memory is stored in-process and is lost when the Python process restarts.",
+        "**Fix:** Use `RedisChatMessageHistory` to persist memory across sessions.\n\n```python\nfrom langchain.memory import ConversationBufferMemory\nfrom langchain.memory.chat_message_histories import RedisChatMessageHistory\n\nhistory = RedisChatMessageHistory(session_id='user-123', url='redis://localhost:6379')\nmemory = ConversationBufferMemory(chat_memory=history)\n```",
+        "Make sure your Redis instance is running and the `redis` Python package is installed (`pip install redis`)."
+      ],
+      "tags": ["LangChain", "Python", "Memory"]
+    },
+    {
+      "id": "post-002",
+      "date": "2025-06-18",
+      "category": "Trick",
+      "title": "Speed up n8n workflows with parallel branches",
+      "summary": "Running tasks sequentially in n8n is fine for simple flows, but parallel branches cut execution time dramatically for independent tasks.",
+      "body": [
+        "In n8n, every node by default runs after the previous one finishes. If you have two API calls that don't depend on each other, you're wasting time.",
+        "**The trick:** Use a `Split In Batches` node or duplicate connections from a single node to two independent branches. Both branches execute simultaneously.",
+        "For example: after fetching a list of users, send Slack notifications AND update your CRM at the same time instead of one after the other. I saw a 3x speed improvement on a workflow that was previously taking 45 seconds."
+      ],
+      "tags": ["n8n", "Automation", "Performance"]
+    },
+    {
+      "id": "post-003",
+      "date": "2025-06-05",
+      "category": "Update",
+      "title": "OpenAI Function Calling → now called Tool Calling",
+      "summary": "OpenAI rebranded 'function calling' to 'tool calling' in their API. If you're using older LangChain code, here's what changed and what to update.",
+      "body": [
+        "As of OpenAI API v1.1+, the `functions` parameter in chat completions is deprecated in favor of `tools`. LangChain updated their wrappers to reflect this.",
+        "**What to update:** Replace `llm.predict_messages(... functions=...)` with the new `bind_tools()` method on your chat model.",
+        "```python\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.tools import tool\n\n@tool\ndef get_weather(city: str) -> str:\n    return f'Weather in {city}: sunny'\n\nllm = ChatOpenAI().bind_tools([get_weather])\n```",
+        "The new approach is cleaner and works across different model providers without changing your tool definitions."
+      ],
+      "tags": ["OpenAI", "LangChain", "Update"]
+    },{
+      "id": "post-003",
+      "date": "2025-06-05",
+      "category": "Update",
+      "title": "OpenAI Function Calling → now called Tool Calling",
+      "summary": "OpenAI rebranded 'function calling' to 'tool calling' in their API. If you're using older LangChain code, here's what changed and what to update.",
+      "body": [
+        "As of OpenAI API v1.1+, the `functions` parameter in chat completions is deprecated in favor of `tools`. LangChain updated their wrappers to reflect this.",
+        "**What to update:** Replace `llm.predict_messages(... functions=...)` with the new `bind_tools()` method on your chat model.",
+        "```python\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.tools import tool\n\n@tool\ndef get_weather(city: str) -> str:\n    return f'Weather in {city}: sunny'\n\nllm = ChatOpenAI().bind_tools([get_weather])\n```",
+        "The new approach is cleaner and works across different model providers without changing your tool definitions."
+      ],
+      "tags": ["OpenAI", "LangChain", "Update"]
+    }
+  ]
+}
