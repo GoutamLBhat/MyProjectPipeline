@@ -14,9 +14,16 @@
   <!-- NOISE OVERLAY -->
   <div class="noise"></div>
 
+  <!-- GRID OVERLAY -->
+  <div class="grid-overlay"></div>
+
   <!-- CURSOR -->
   <div class="cursor" id="cursor"></div>
   <div class="cursor-trail" id="cursorTrail"></div>
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="scroll-progress" id="scrollProgress"></div>
 
   <!-- NAVBAR -->
   <header class="nav" id="nav">
@@ -24,10 +31,10 @@
       <span class="logo-bracket">[</span>GB<span class="logo-bracket">]</span>
     </div>
     <nav class="nav-links">
-      <a href="#about">About</a>
-      <a href="#projects">Work</a>
-      <a href="#knowledge">Learn</a>
-      <a href="#contact">Contact</a>
+      <a href="#about" data-magnetic>About</a>
+      <a href="#projects" data-magnetic>Work</a>
+      <a href="#knowledge" data-magnetic>Learn</a>
+      <a href="#contact" data-magnetic>Contact</a>
     </nav>
     <div class="nav-right">
       <div class="nav-status">
@@ -38,15 +45,30 @@
         <span class="theme-icon sun">☀</span>
         <span class="theme-icon moon">◑</span>
       </button>
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </header>
 
+  <!-- MOBILE MENU -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="#about" class="mobile-link">About</a>
+    <a href="#projects" class="mobile-link">Work</a>
+    <a href="#knowledge" class="mobile-link">Learn</a>
+    <a href="#contact" class="mobile-link">Contact</a>
+  </div>
+
   <!-- HERO -->
   <section class="hero">
+    <!-- Animated background particles -->
+    <canvas id="heroCanvas" class="hero-canvas"></canvas>
+
     <div class="hero-left">
-      <div class="hero-tag animate-in" style="--delay:0.1s" id="heroTag">Automation & AI Engineer</div>
+      <!-- <div class="hero-tag animate-in" style="--delay:0.1s" id="heroTag">Automation & AI Engineer</div> -->
+       
       <h1 class="hero-title animate-in" style="--delay:0.2s" id="heroTitle">
-        Building<br><em>Intelligent</em><br>Systems
+        Building<br><em id="typedWord">Intelligent</em><br>Systems
       </h1>
       <p class="hero-sub animate-in" style="--delay:0.4s" id="heroSub">
         5+ years designing AI-driven automation,<br>
@@ -54,14 +76,18 @@
         that solve real-world problems.
       </p>
       <div class="hero-ctas animate-in" style="--delay:0.55s">
-        <a href="#projects" class="btn-primary">See My Work</a>
+        <a href="#projects" class="btn-primary">See My Work <span class="btn-arrow">→</span></a>
         <a href="#contact" class="btn-ghost">Get in Touch</a>
       </div>
+      <!-- Tech orbit badges -->
+      <div class="tech-orbit animate-in" style="--delay:0.7s" id="techOrbit"></div>
     </div>
 
     <div class="hero-right animate-in" style="--delay:0.3s">
       <div class="profile-card">
+        <div class="profile-card-glow"></div>
         <div class="profile-img-wrap">
+          <div class="profile-ring"></div>
           <img src="profile.jpg" alt="Goutam Bhat" onerror="this.style.display='none';document.querySelector('.profile-initials').style.display='flex'">
           <div class="profile-initials">GB</div>
         </div>
@@ -73,33 +99,92 @@
           <span>Python</span><span>LangChain</span><span>n8n</span><span>FastAPI</span>
         </div>
         <div class="profile-stat-row" id="profileStats">
-          <div class="profile-stat"><strong>5+</strong><span>Years Exp.</span></div>
-          <div class="profile-stat"><strong>20+</strong><span>Projects</span></div>
-          <div class="profile-stat"><strong>10+</strong><span>Clients</span></div>
+          <div class="profile-stat"><strong data-count="5">0</strong><span>Years Exp.</span></div>
+          <div class="profile-stat"><strong data-count="20">0</strong><span>Projects</span></div>
+          <div class="profile-stat"><strong data-count="10">0</strong><span>Clients</span></div>
         </div>
       </div>
+    </div>
+<br>
+    <div class="hero-scroll-hint">
+      
+      <div class="scroll-line"></div>
+      <div class="hero-tag animate-in" style="--delay:0.1s" id="heroTag">Automation & AI Engineer</div>
+      <span>Scroll</span>
     </div>
   </section>
 
   <!-- ABOUT -->
   <section id="about" class="section about-section">
-    <div class="section-label">// About</div>
+    <!-- <div class="section-label">// About</div> -->
     <div class="about-grid reveal">
       <div class="about-text">
         <h2 id="aboutHeadline">I build systems that<br><em>think and act</em></h2>
         <div id="aboutParagraphs">
           <p>I specialize in AI-driven automation systems and enterprise-grade solutions.</p>
         </div>
+        <!-- Timeline -->
+        <!-- <div class="timeline" id="timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2024</span>
+              <h4>Senior AI Engineer</h4>
+              <p>Building enterprise RAG & automation pipelines</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2022</span>
+              <h4>Automation Lead</h4>
+              <p>Led bot development & n8n workflows at scale</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2021</span>
+              <h4>Started Journey</h4>
+              <p>First AI project — Python automation tools</p>
+            </div>
+          </div>
+        </div>
+      </div> -->
+      <div class="timeline" id="timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2025-2026</span>
+              <h4>RAG & Multi-Agent Systems</h4>
+              <p>Deep-dived into Retrieval-Augmented Generation and orchestrating multi-agent AI pipelines</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2023</span>
+              <h4>AI & Agents Explorer</h4>
+              <p>Started building AI-powered automation agents — combining LLMs with real-world workflows</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <span class="timeline-year">2021</span>
+              <h4>Automation & Web Technologies</h4>
+              <p>Worked on Automation Anywhere RPA & explored HTML, CSS, JavaScript and .NET</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="skills-grid" id="skillsGrid">
-        <!-- Populated from JSON -->
-      </div>
+      <div class="skills-grid" id="skillsGrid"></div>
     </div>
   </section>
 
   <!-- PROJECTS -->
   <section id="projects" class="section projects-section">
-    <div class="section-label">// Selected Work</div>
+    <!-- <div class="section-label">// Selected Work</div> -->
     <div class="projects-header">
       <h2>Things I've built</h2>
       <span class="project-count" id="projectCount">—</span>
@@ -109,10 +194,16 @@
 
   <!-- KNOWLEDGE CENTER -->
   <section id="knowledge" class="section knowledge-section">
-    <div class="section-label">// Knowledge Center</div>
-    <div class="knowledge-header">
+    <!-- <div class="section-label">// Knowledge Center</div> -->
+    <div class="knowledge-header reveal">
       <h2>Fixes, Tricks &amp; Updates</h2>
       <p class="knowledge-sub">Issues I've solved, tips I've discovered, and tools worth knowing about.</p>
+    </div>
+    <!-- Search bar -->
+    <div class="knowledge-search-wrap reveal">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="knowledgeSearch" class="knowledge-search" placeholder="Search posts…" autocomplete="off">
+      <kbd>⌘K</kbd>
     </div>
     <div class="knowledge-filters" id="knowledgeFilters">
       <button class="filter-btn active" data-filter="all">All</button>
@@ -134,24 +225,49 @@
       <h2 class="modal-title" id="modalTitle"></h2>
       <div class="modal-tags" id="modalTags"></div>
       <div class="modal-body" id="modalBody"></div>
+      <div class="modal-share">
+        <span>Share:</span>
+        <button class="share-btn" id="copyLinkBtn" title="Copy link">🔗 Copy Link</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI CHAT WIDGET -->
+  <div class="ai-chat-bubble" id="aiChatBubble" title="Ask AI about Goutam">
+    <span class="ai-chat-icon">✦</span>
+    <span class="ai-chat-label">Ask AI</span>
+  </div>
+
+  <div class="ai-chat-panel" id="aiChatPanel">
+    <div class="ai-chat-header">
+      <span>✦ Ask about Goutam</span>
+      <button class="ai-chat-close" id="aiChatClose">✕</button>
+    </div>
+    <div class="ai-chat-messages" id="aiChatMessages">
+      <div class="ai-msg ai">Hi! I'm Goutam's AI assistant. Ask me anything about his work, skills, or projects. 👋</div>
+    </div>
+    <div class="ai-chat-input-row">
+      <input type="text" id="aiChatInput" class="ai-chat-input" placeholder="What does Goutam do?">
+      <button class="ai-chat-send" id="aiChatSend">↑</button>
     </div>
   </div>
 
   <!-- CONTACT -->
   <section id="contact" class="section contact-section">
-    <div class="section-label">// Contact</div>
+    <!-- <div class="section-label">// Contact</div> -->
     <div class="contact-inner reveal">
       <h2>Let's build<br><em>something</em></h2>
       <p>Have a problem that needs automation or AI? I'd love to hear about it.</p>
-      <div class="contact-links" id="contactLinks">
-        <!-- Populated from JSON -->
-      </div>
+      <div class="contact-links" id="contactLinks"></div>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer class="footer">
     <span id="footerName">© 2025 Goutam Bhat</span>
+    <div class="footer-center">
+      <span class="footer-time" id="footerTime"></span>
+    </div>
     <span>Built with intention.</span>
   </footer>
 

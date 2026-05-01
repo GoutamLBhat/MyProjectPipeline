@@ -2,9 +2,9 @@
   "___INSTRUCTIONS___": "Edit each section below independently. All sections are optional. Follow the format exactly.",
 
   "profile": {
-    "name": "Goutam Laxminarayan Bhat",
+    "name": "Goutam Bhat",
     "title": "AI & Automation Engineer",
-    "tagline": "Automation & AI Engineer",
+    "tagline": " ",
     "hero_headline": ["Building", "Intelligent", "Systems"],
     "hero_sub": "5+ years designing AI-driven automation, intelligent bots, and scalable applications that solve real-world problems.",
     "stats": [
@@ -35,11 +35,16 @@
 
   "projects": [
     {
-      "title": "AI Incident Manager",
-      "description": "AI-powered incident detection and triage system that automatically identifies, classifies, and escalates critical events in real time — reducing MTTR by 60%.",
-      "image": "https://picsum.photos/seed/incident/600/400",
-      "link": "https://github.com/yourprofile",
-      "tags": ["Python", "LangChain", "FastAPI"]
+      "title": "Multi-Agent Research & Blog System",
+      "description": "An autonomous AI agent pipeline built with CrewAI that coordinates specialized agents to perform deep web research and synthesize high-quality technical blog posts, significantly reducing content creation cycles.",
+      "image": "https://images.unsplash.com/photo-1677442136019-21780ecad995",
+      "link": "https://github.com/GoutamLBhat/research_and_blog_crew",
+      "tags": [
+          "CrewAI",
+          "Python",
+          "Multi-Agent Systems",
+          "LLMs"
+      ]
     },
     {
       "title": "Workflow Automation Bot",
@@ -57,7 +62,7 @@
     }
   ],
 
-  "knowledge_center": [
+   "knowledge_center": [
     {
       "id": "post-001",
       "date": "2025-07-01",
@@ -97,19 +102,816 @@
         "The new approach is cleaner and works across different model providers without changing your tool definitions."
       ],
       "tags": ["OpenAI", "LangChain", "Update"]
-    },{
-      "id": "post-003",
-      "date": "2025-06-05",
-      "category": "Update",
-      "title": "OpenAI Function Calling → now called Tool Calling",
-      "summary": "OpenAI rebranded 'function calling' to 'tool calling' in their API. If you're using older LangChain code, here's what changed and what to update.",
+    },
+    {
+      "id": "post-004",
+      "date": "2025-07-05",
+      "category": "Trick",
+      "title": "Shrink prompt token usage with structured output instead of verbose instructions",
+      "summary": "Long instruction blocks telling the model 'respond only in JSON with these fields' waste tokens. Use the response_format parameter instead.",
       "body": [
-        "As of OpenAI API v1.1+, the `functions` parameter in chat completions is deprecated in favor of `tools`. LangChain updated their wrappers to reflect this.",
-        "**What to update:** Replace `llm.predict_messages(... functions=...)` with the new `bind_tools()` method on your chat model.",
-        "```python\nfrom langchain_openai import ChatOpenAI\nfrom langchain_core.tools import tool\n\n@tool\ndef get_weather(city: str) -> str:\n    return f'Weather in {city}: sunny'\n\nllm = ChatOpenAI().bind_tools([get_weather])\n```",
-        "The new approach is cleaner and works across different model providers without changing your tool definitions."
+        "A common mistake is writing 5–8 lines of system prompt instructing the model on output format when the API has a native way to enforce it.",
+        "**Trick:** Use `response_format={ 'type': 'json_object' }` on GPT-4o and newer models to enforce JSON output without burning tokens on formatting instructions.\n\n```python\nresponse = client.chat.completions.create(\n    model='gpt-4o',\n    response_format={ 'type': 'json_object' },\n    messages=[{'role': 'user', 'content': 'List 3 cities with their population'}]\n)\n```",
+        "This alone can save 30–60 tokens per call depending on how verbose your previous format instructions were. At scale, that compounds fast."
       ],
-      "tags": ["OpenAI", "LangChain", "Update"]
+      "tags": ["Token Optimization", "OpenAI", "Prompt Engineering"]
+    },
+    {
+      "id": "post-005",
+      "date": "2025-07-04",
+      "category": "Tip",
+      "title": "Use system prompt caching to cut costs on repeated agent calls",
+      "summary": "If your agent always starts with a large system prompt (tools list, persona, context), Anthropic's prompt caching can reduce cost by up to 90% on that portion.",
+      "body": [
+        "In multi-turn agent loops, the system prompt is resent with every call. If it's 2000 tokens and you make 50 calls, that's 100,000 tokens — most of it redundant.",
+        "**Tip:** Use Anthropic's `cache_control` parameter to cache the static parts of your prompt.\n\n```python\nmessages = [\n  {\n    'role': 'user',\n    'content': [\n      {\n        'type': 'text',\n        'text': your_large_context,\n        'cache_control': { 'type': 'ephemeral' }\n      }\n    ]\n  }\n]\n```",
+        "Cached tokens are billed at ~10% of normal input token price. For agents with large static contexts (RAG chunks, tool schemas), this is a huge cost lever."
+      ],
+      "tags": ["Token Optimization", "Anthropic", "Cost Saving", "Agents"]
+    },
+    {
+      "id": "post-006",
+      "date": "2025-07-03",
+      "category": "Tip",
+      "title": "Always set max_tokens explicitly to avoid runaway generation costs",
+      "summary": "Without a max_tokens limit, models can generate thousands of tokens for a simple task. Always cap output to what you actually need.",
+      "body": [
+        "Leaving `max_tokens` unset is one of the most common silent cost drains in production AI systems. The model will generate until it hits its context limit.",
+        "**Tip:** Estimate the worst-case output size for your task and set `max_tokens` to 1.5x that. For classification tasks, set it as low as 10–20.\n\n```python\n# For a yes/no classifier — no reason to allow 2000 tokens\nresponse = client.chat.completions.create(\n    model='gpt-4o-mini',\n    max_tokens=5,\n    messages=[{'role': 'user', 'content': 'Is this spam? Reply Yes or No.\\n\\n' + email_text}]\n)\n```",
+        "Pairing a small model (gpt-4o-mini) with a tight `max_tokens` for simple classification tasks can reduce cost by 95% compared to using GPT-4o with no limit."
+      ],
+      "tags": ["Token Optimization", "Cost Saving", "Best Practice"]
+    },
+    {
+      "id": "post-007",
+      "date": "2025-07-02",
+      "category": "Trick",
+      "title": "Use tiktoken to pre-count tokens before sending requests",
+      "summary": "Don't guess how many tokens your prompt uses. Pre-count with tiktoken and gate expensive calls behind a token budget check.",
+      "body": [
+        "Sending oversized prompts to the API wastes money and can hit context limits silently. Pre-counting lets you truncate or summarize before the call.",
+        "**Trick:** Use OpenAI's `tiktoken` library to count tokens locally before the API call.\n\n```python\nimport tiktoken\n\ndef count_tokens(text: str, model: str = 'gpt-4o') -> int:\n    enc = tiktoken.encoding_for_model(model)\n    return len(enc.encode(text))\n\nif count_tokens(my_prompt) > 3000:\n    my_prompt = summarize(my_prompt)  # truncate or compress\n```",
+        "This pattern is especially useful in RAG pipelines where retrieved chunks can balloon unpredictably depending on the query."
+      ],
+      "tags": ["Token Optimization", "tiktoken", "RAG", "Python"]
+    },
+    {
+      "id": "post-008",
+      "date": "2025-06-30",
+      "category": "Tip",
+      "title": "Route tasks to smaller models for simple subtasks in an agent pipeline",
+      "summary": "Not every step in your agent needs GPT-4o. Routing simple classification or extraction steps to gpt-4o-mini saves significant cost.",
+      "body": [
+        "In a multi-step agent, different steps have different complexity requirements. Using a powerful model for every step is like using a sledgehammer to crack a nut.",
+        "**Tip:** Build a router that sends tasks to the cheapest model capable of handling them.\n\n```python\ndef route_task(task_type: str, prompt: str):\n    if task_type in ['classify', 'extract', 'reformat']:\n        model = 'gpt-4o-mini'\n    elif task_type in ['reason', 'plan', 'synthesize']:\n        model = 'gpt-4o'\n    return call_llm(model, prompt)\n```",
+        "In a real project, routing ~60% of subtasks to gpt-4o-mini reduced monthly API costs by about 40% with no measurable quality drop."
+      ],
+      "tags": ["Agents", "Cost Saving", "Model Routing", "Token Optimization"]
+    },
+    {
+      "id": "post-009",
+      "date": "2025-06-28",
+      "category": "Trick",
+      "title": "Compress conversation history with a rolling summary instead of full context",
+      "summary": "Keeping the full chat history in context grows linearly. Replace old messages with a running summary to keep token usage flat.",
+      "body": [
+        "Multi-turn conversations balloon in token count fast. After 10 turns, you might be sending 3,000+ tokens of history just for context.",
+        "**Trick:** After every N turns, summarize the conversation so far and replace the raw history with that summary.\n\n```python\ndef compress_history(messages: list, llm) -> list:\n    summary = llm.invoke(\n        f'Summarize this conversation in 3 sentences:\\n{messages}'\n    )\n    return [{'role': 'system', 'content': f'Conversation so far: {summary}'}]\n\nif len(messages) > 10:\n    messages = compress_history(messages, llm)\n```",
+        "This keeps context size roughly constant no matter how long the conversation runs — critical for long-running support bots and agents."
+      ],
+      "tags": ["Token Optimization", "Memory", "LangChain", "Agents"]
+    },
+    {
+      "id": "post-010",
+      "date": "2025-06-26",
+      "category": "Update",
+      "title": "LangGraph is now the recommended way to build stateful agents in LangChain",
+      "summary": "LangChain's older AgentExecutor is being replaced by LangGraph for building agents with loops, branching, and persistent state.",
+      "body": [
+        "If you're still using `initialize_agent()` or `AgentExecutor` from LangChain, you're on a deprecated path. LangGraph is the new standard for complex agents.",
+        "**What changed:** LangGraph models agent workflows as directed graphs with nodes (steps) and edges (transitions), giving you explicit control over loops and branching.",
+        "```python\nfrom langgraph.graph import StateGraph, END\n\nbuilder = StateGraph(AgentState)\nbuilder.add_node('call_llm', call_llm)\nbuilder.add_node('run_tool', run_tool)\nbuilder.add_conditional_edges('call_llm', should_continue, {'tool': 'run_tool', 'end': END})\ngraph = builder.compile()\n```",
+        "The key benefit: you get checkpointing, human-in-the-loop pausing, and time-travel debugging out of the box — things AgentExecutor could never do cleanly."
+      ],
+      "tags": ["LangGraph", "LangChain", "Agents", "Update"]
+    },
+    {
+      "id": "post-011",
+      "date": "2025-06-24",
+      "category": "Tip",
+      "title": "Use few-shot examples inside tool descriptions to improve tool selection",
+      "summary": "Agents often pick the wrong tool when instructions are vague. Adding 1–2 examples directly in the tool description dramatically improves selection accuracy.",
+      "body": [
+        "Tool descriptions are what the LLM uses to decide which tool to call. Vague descriptions like 'searches the web' lead to wrong selections.",
+        "**Tip:** Write tool descriptions that include a concrete example of when to use it and when NOT to.\n\n```python\n@tool\ndef search_internal_docs(query: str) -> str:\n    \"\"\"\n    Search internal company documentation.\n    USE THIS for questions about company policies, onboarding, internal processes.\n    DO NOT USE for general knowledge or current events — use web_search instead.\n    Example: 'What is our refund policy?' → use this tool.\n    \"\"\"\n    return vector_search(query)\n```",
+        "This simple addition reduced incorrect tool calls by ~35% in a customer support agent I built, without any other changes."
+      ],
+      "tags": ["Agents", "Prompt Engineering", "Tool Use", "Tip"]
+    },
+    {
+      "id": "post-012",
+      "date": "2025-06-22",
+      "category": "Fix",
+      "title": "Agent stuck in a tool-calling loop — how to add a step limit",
+      "summary": "Agents without a step limit can loop infinitely when a tool returns unexpected output. Always set max_iterations.",
+      "body": [
+        "An agent that can't solve a task gracefully will keep retrying tools in a loop, burning tokens and money until it hits the context limit.",
+        "**Fix:** Set `max_iterations` in LangChain's AgentExecutor, or implement a step counter in LangGraph.\n\n```python\n# LangChain AgentExecutor\nagent_executor = AgentExecutor(\n    agent=agent,\n    tools=tools,\n    max_iterations=10,\n    early_stopping_method='generate'  # forces a final answer instead of just stopping\n)\n```",
+        "Also add a fallback message so the user knows the agent hit its limit: `handle_parsing_errors=True` prevents raw exceptions from surfacing."
+      ],
+      "tags": ["Agents", "Fix", "LangChain", "LangGraph"]
+    },
+    {
+      "id": "post-013",
+      "date": "2025-06-20",
+      "category": "Trick",
+      "title": "Strip whitespace and redundant phrasing from prompts to save tokens",
+      "summary": "Verbose system prompts with filler phrases, double spaces, and repeated context are silent token drains. A quick cleanup script can trim 10–20% of tokens.",
+      "body": [
+        "Many system prompts accumulate bloat over time — phrases like 'Please make sure to always...', 'It is very important that you...', and repeated context blocks.",
+        "**Trick:** Run your prompts through a cleanup function before every call.\n\n```python\nimport re\n\ndef slim_prompt(text: str) -> str:\n    # collapse multiple spaces/newlines\n    text = re.sub(r'\\n{3,}', '\\n\\n', text)\n    text = re.sub(r' {2,}', ' ', text)\n    # remove filler phrases\n    fillers = ['Please make sure to', 'It is very important that', 'Always remember to']\n    for f in fillers:\n        text = text.replace(f, '')\n    return text.strip()\n```",
+        "On a 1,500-token system prompt, this consistently shaved 150–250 tokens — about 10–15% reduction for zero quality loss."
+      ],
+      "tags": ["Token Optimization", "Prompt Engineering", "Python"]
+    },
+    {
+      "id": "post-014",
+      "date": "2025-06-19",
+      "category": "Tip",
+      "title": "Use semantic chunking instead of fixed-size chunking for better RAG results",
+      "summary": "Fixed 512-token chunks often split ideas mid-thought. Semantic chunking groups related sentences together, dramatically improving retrieval quality.",
+      "body": [
+        "The default `RecursiveCharacterTextSplitter` in LangChain splits by character count, which can break a single concept across two chunks — meaning neither chunk retrieves well.",
+        "**Tip:** Use `SemanticChunker` from LangChain Experimental which groups sentences by embedding similarity.\n\n```python\nfrom langchain_experimental.text_splitter import SemanticChunker\nfrom langchain_openai import OpenAIEmbeddings\n\nchunker = SemanticChunker(\n    OpenAIEmbeddings(),\n    breakpoint_threshold_type='percentile'\n)\ndocs = chunker.create_documents([your_text])\n```",
+        "In a knowledge base of 500 technical documents, switching to semantic chunking improved answer accuracy from ~67% to ~84% on our internal eval set."
+      ],
+      "tags": ["RAG", "LangChain", "Embeddings", "Tip"]
+    },
+    {
+      "id": "post-015",
+      "date": "2025-06-17",
+      "category": "Trick",
+      "title": "Add a reranker after vector search to fix RAG relevance issues",
+      "summary": "Vector similarity search returns the most 'similar' chunks, not the most relevant ones. A cross-encoder reranker fixes this with minimal overhead.",
+      "body": [
+        "Cosine similarity on embeddings is fast but imprecise — chunks that share vocabulary with the query score high even if they don't answer it.",
+        "**Trick:** After retrieving top-20 candidates, rerank with a cross-encoder and only pass the top-5 to the LLM.\n\n```python\nfrom sentence_transformers import CrossEncoder\n\nreranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')\n\ndef rerank(query: str, candidates: list) -> list:\n    pairs = [(query, c.page_content) for c in candidates]\n    scores = reranker.predict(pairs)\n    ranked = sorted(zip(scores, candidates), reverse=True)\n    return [doc for _, doc in ranked[:5]]\n```",
+        "This halves the tokens sent to the LLM (top-5 vs top-10) while simultaneously improving answer quality. Win-win."
+      ],
+      "tags": ["RAG", "Reranker", "Token Optimization", "Python"]
+    },
+    {
+      "id": "post-016",
+      "date": "2025-06-15",
+      "category": "Update",
+      "title": "CrewAI now supports async agent execution natively",
+      "summary": "CrewAI v0.51+ added `kickoff_async()` which lets you run crews without blocking your main thread — critical for production web applications.",
+      "body": [
+        "Earlier versions of CrewAI only offered synchronous `kickoff()`, which blocked the event loop in async frameworks like FastAPI.",
+        "**What's new:** `kickoff_async()` lets you await the crew result without blocking.\n\n```python\nimport asyncio\nfrom crewai import Crew\n\nasync def run_research(topic: str):\n    crew = Crew(agents=[researcher, writer], tasks=[research_task, write_task])\n    result = await crew.kickoff_async(inputs={'topic': topic})\n    return result\n\n# In FastAPI\n@app.post('/research')\nasync def research_endpoint(topic: str):\n    result = await run_research(topic)\n    return {'result': result}\n```",
+        "This makes CrewAI usable in production APIs without spinning up separate threads or processes for each crew run."
+      ],
+      "tags": ["CrewAI", "Async", "FastAPI", "Update"]
+    },
+    {
+      "id": "post-017",
+      "date": "2025-06-13",
+      "category": "Tip",
+      "title": "Pass only relevant document fields to the LLM, not entire records",
+      "summary": "When using tools that fetch database records, sending the full JSON object burns tokens. Extract only the fields the LLM needs for the task.",
+      "body": [
+        "If your agent fetches a customer record with 30 fields but only needs name, email, and plan_type — you're wasting ~400 tokens per call on irrelevant data.",
+        "**Tip:** Create a slim projection of your data before inserting it into the prompt.\n\n```python\ndef slim_customer(customer: dict) -> dict:\n    return {\n        'name': customer['full_name'],\n        'email': customer['email'],\n        'plan': customer['subscription']['plan_type'],\n        'active': customer['status'] == 'active'\n    }\n\n# In your tool\nprompt = f'Customer info: {slim_customer(raw_record)}'\n```",
+        "This single pattern reduced per-call token usage by 35% in a CRM agent that fetched full Salesforce records."
+      ],
+      "tags": ["Token Optimization", "Agents", "Best Practice"]
+    },
+    {
+      "id": "post-018",
+      "date": "2025-06-11",
+      "category": "Fix",
+      "title": "Pydantic validation errors crashing your LangChain output parser",
+      "summary": "When the LLM returns slightly malformed JSON, Pydantic parsers crash hard. Here's a robust fallback pattern using OutputFixingParser.",
+      "body": [
+        "LLMs sometimes produce JSON with trailing commas, missing quotes, or extra text — all of which break `PydanticOutputParser` with a hard error.",
+        "**Fix:** Wrap your parser with `OutputFixingParser` which sends the broken output back to the LLM for repair automatically.\n\n```python\nfrom langchain.output_parsers import PydanticOutputParser, OutputFixingParser\nfrom pydantic import BaseModel\n\nclass TaskResult(BaseModel):\n    summary: str\n    confidence: float\n\nbase_parser = PydanticOutputParser(pydantic_object=TaskResult)\nrobust_parser = OutputFixingParser.from_llm(parser=base_parser, llm=llm)\n\n# This will auto-fix malformed output before parsing\nresult = robust_parser.parse(llm_output)\n```",
+        "The fix adds one extra LLM call only when needed — a good trade-off versus a crashed pipeline."
+      ],
+      "tags": ["LangChain", "Pydantic", "Fix", "Output Parsing"]
+    },
+    {
+      "id": "post-019",
+      "date": "2025-06-09",
+      "category": "Trick",
+      "title": "Use hypothetical document embeddings (HyDE) to improve sparse query retrieval",
+      "summary": "Short or vague queries retrieve poorly from vector stores. HyDE generates a hypothetical answer first, then uses that richer text for embedding — massively improving recall.",
+      "body": [
+        "A query like 'refund?' is hard to embed well. The vector is sparse and won't match relevant chunks that use words like 'return policy' or 'reimbursement'.",
+        "**Trick:** Use HyDE — ask the LLM to generate a hypothetical document that would answer the query, then embed that instead.\n\n```python\ndef hyde_retrieve(query: str, vectorstore, llm) -> list:\n    # Step 1: generate a hypothetical answer\n    hypothetical = llm.invoke(\n        f'Write a short paragraph that would answer this question: {query}'\n    )\n    # Step 2: embed the hypothetical answer, not the query\n    results = vectorstore.similarity_search(hypothetical, k=5)\n    return results\n```",
+        "HyDE typically improves retrieval recall by 15–30% on short or ambiguous queries. The extra LLM call is cheap if you use a small model for the hypothesis step."
+      ],
+      "tags": ["RAG", "Embeddings", "Trick", "Retrieval"]
+    },
+    {
+      "id": "post-020",
+      "date": "2025-06-07",
+      "category": "Tip",
+      "title": "Instrument your agents with LangSmith for production debugging",
+      "summary": "When agents fail in production, you need a trace of every LLM call, tool invocation, and token count. LangSmith provides this out of the box with one env variable.",
+      "body": [
+        "Debugging a failed agent run from logs alone is painful — you can't see what the model was thinking, which tool was called, or how tokens were spent.",
+        "**Tip:** Enable LangSmith tracing with two environment variables — no code changes needed.\n\n```bash\nexport LANGCHAIN_TRACING_V2=true\nexport LANGCHAIN_API_KEY=your_key_here\nexport LANGCHAIN_PROJECT=my-agent-prod\n```",
+        "Every run now appears in the LangSmith dashboard with a full trace: inputs, outputs, latency, token counts, and cost per step. This paid for itself the first time we caught a prompt regression in production within minutes."
+      ],
+      "tags": ["LangSmith", "Observability", "Agents", "Debugging"]
+    },
+    {
+      "id": "post-021",
+      "date": "2025-06-04",
+      "category": "Trick",
+      "title": "Batch embedding API calls instead of embedding one chunk at a time",
+      "summary": "Calling the embeddings API for each chunk individually is slow and expensive. Batch them into a single request to reduce latency by 10x.",
+      "body": [
+        "A common anti-pattern in RAG pipelines is a for-loop that calls `embeddings.embed_query(chunk)` one at a time. This creates N API round-trips instead of 1.",
+        "**Trick:** Use `embed_documents()` which accepts a list and sends a single batched request.\n\n```python\n# Slow — N API calls\nembeddings_list = [embeddings.embed_query(chunk) for chunk in chunks]\n\n# Fast — 1 API call\nembeddings_list = embeddings.embed_documents(chunks)\n```",
+        "For 500 chunks, this reduced embedding time from ~45 seconds to ~4 seconds in my pipeline. The OpenAI embeddings API accepts up to 2048 inputs per request."
+      ],
+      "tags": ["Embeddings", "Token Optimization", "Performance", "RAG"]
+    },
+    {
+      "id": "post-022",
+      "date": "2025-06-02",
+      "category": "Update",
+      "title": "Mistral AI released Mistral Small 3.1 — beats GPT-4o-mini on most benchmarks",
+      "summary": "Mistral Small 3.1 (24B parameters) is now one of the best small models available, with better reasoning than GPT-4o-mini at a lower price per token.",
+      "body": [
+        "As of early 2025, Mistral Small 3.1 outperforms GPT-4o-mini on MMLU, HumanEval, and GSM8K while being cheaper per million tokens.",
+        "**What this means for agents:** If you've been using GPT-4o-mini for routing, classification, or extraction subtasks, Mistral Small 3.1 is worth benchmarking as a drop-in replacement.",
+        "```python\nfrom langchain_mistralai import ChatMistralAI\n\nllm = ChatMistralAI(\n    model='mistral-small-latest',\n    temperature=0\n)\n```",
+        "The LangChain integration works identically to OpenAI's — you can swap models with a single line change and run your eval suite to compare."
+      ],
+      "tags": ["Mistral", "Model Selection", "Update", "Cost Saving"]
+    },
+    {
+      "id": "post-023",
+      "date": "2025-05-30",
+      "category": "Tip",
+      "title": "Use temperature=0 for deterministic agent tool calls",
+      "summary": "Agent tool-calling steps should almost always use temperature=0. Randomness in tool selection leads to inconsistent, hard-to-debug behavior.",
+      "body": [
+        "Temperature controls randomness. For creative tasks (writing, brainstorming), higher values help. For tool-calling in agents, randomness is your enemy — it causes the same input to trigger different tools on different runs.",
+        "**Tip:** Set `temperature=0` globally for agent chains, and only raise it for specific generation steps that need creativity.\n\n```python\n# Agent planner — needs determinism\nplanner_llm = ChatOpenAI(model='gpt-4o', temperature=0)\n\n# Content generator — benefits from variety\nwriter_llm = ChatOpenAI(model='gpt-4o', temperature=0.7)\n```",
+        "This split-temperature pattern makes your agent's structural behavior reproducible while still allowing creative output where it matters."
+      ],
+      "tags": ["Agents", "Best Practice", "Tip", "Prompt Engineering"]
+    },
+    {
+      "id": "post-024",
+      "date": "2025-05-28",
+      "category": "Fix",
+      "title": "Context window overflow crashing long RAG chains",
+      "summary": "When too many chunks are retrieved, the full prompt exceeds the model's context window and the API returns a 400 error. Here's how to guard against it.",
+      "body": [
+        "RAG pipelines that retrieve top-10 chunks can easily push your total prompt over 8K or 16K tokens depending on chunk size, causing a hard API error.",
+        "**Fix:** Measure the assembled prompt's token count before sending and truncate retrieved docs if needed.\n\n```python\nimport tiktoken\n\ndef safe_rag_prompt(query: str, docs: list, max_tokens: int = 6000) -> str:\n    enc = tiktoken.encoding_for_model('gpt-4o')\n    context = ''\n    for doc in docs:\n        candidate = context + doc.page_content + '\\n'\n        if len(enc.encode(candidate)) > max_tokens:\n            break\n        context = candidate\n    return f'Context:\\n{context}\\n\\nQuestion: {query}'\n```",
+        "This ensures you use as much context as possible without ever exceeding the limit. Always leave 1000–2000 tokens headroom for the output."
+      ],
+      "tags": ["RAG", "Fix", "Token Optimization", "LangChain"]
+    },
+    {
+      "id": "post-025",
+      "date": "2025-05-26",
+      "category": "Trick",
+      "title": "Store agent scratchpad observations externally to keep context lean",
+      "summary": "ReAct agents accumulate tool observations in-context. Storing them externally and passing only a summary keeps the active context window small.",
+      "body": [
+        "In ReAct-style agents, each tool call result is appended to the conversation. After 5–6 tool calls the context is dominated by raw tool outputs, not the actual task.",
+        "**Trick:** Intercept tool results, store them in a dict, and pass only a compressed reference into the LLM context.\n\n```python\nobservation_store = {}\n\ndef tool_with_external_memory(tool_name: str, result: str) -> str:\n    key = f'obs_{len(observation_store)}'\n    observation_store[key] = result\n    # Return a compact reference instead of the full result\n    preview = result[:200] + '...' if len(result) > 200 else result\n    return f'[{key}] {preview}'\n```",
+        "When the agent needs the full result later, it can request it by key. This pattern keeps context flat regardless of how many tools are called."
+      ],
+      "tags": ["Agents", "Token Optimization", "ReAct", "Trick"]
+    },
+    {
+      "id": "post-026",
+      "date": "2025-05-24",
+      "category": "Tip",
+      "title": "Use OpenAI's Batch API for non-real-time workloads to cut cost by 50%",
+      "summary": "The OpenAI Batch API processes requests asynchronously within 24 hours at 50% of the standard price — perfect for eval pipelines, bulk classification, and report generation.",
+      "body": [
+        "If you're running bulk jobs — processing 10,000 documents overnight, running evals, or generating weekly reports — you're likely paying full price when you don't need to.",
+        "**Tip:** Use the Batch API for any non-real-time workload.\n\n```python\nfrom openai import OpenAI\nimport json\n\nclient = OpenAI()\n\n# Create a .jsonl file with all your requests\nrequests = [\n    {'custom_id': f'req-{i}', 'method': 'POST', 'url': '/v1/chat/completions',\n     'body': {'model': 'gpt-4o-mini', 'messages': [{'role': 'user', 'content': doc}]}}\n    for i, doc in enumerate(documents)\n]\n\nbatch_file = client.files.create(file=json.dumps(requests).encode(), purpose='batch')\nbatch = client.batches.create(input_file_id=batch_file.id, endpoint='/v1/chat/completions', completion_window='24h')\n```",
+        "50% cost reduction with zero quality difference. The only trade-off is latency — responses arrive within 24 hours, not milliseconds."
+      ],
+      "tags": ["OpenAI", "Cost Saving", "Token Optimization", "Batch Processing"]
+    },
+    {
+      "id": "post-027",
+      "date": "2025-05-22",
+      "category": "Trick",
+      "title": "Use XML tags in prompts for reliable structured output without JSON",
+      "summary": "Claude and some other models respond very reliably to XML-tagged output instructions — often more reliably than JSON format prompts, with no parsing overhead.",
+      "body": [
+        "JSON output instructions can still result in the model adding preamble ('Sure! Here is the JSON: {...}') that breaks parsers. XML tags sidestep this.",
+        "**Trick:** Ask the model to wrap its output in custom XML tags, then extract with a simple regex.\n\n```python\nprompt = \"\"\"\nAnalyze the sentiment of this review and respond ONLY with:\n<sentiment>positive|neutral|negative</sentiment>\n<confidence>0.0-1.0</confidence>\n\nReview: {review}\n\"\"\"\n\nimport re\nresponse = llm.invoke(prompt)\nsentiment = re.search(r'<sentiment>(.*?)</sentiment>', response).group(1)\nconfidence = float(re.search(r'<confidence>(.*?)</confidence>', response).group(1))\n```",
+        "This pattern is especially effective with Claude, which has been trained extensively to respect XML structure in outputs."
+      ],
+      "tags": ["Prompt Engineering", "Output Parsing", "Token Optimization", "Trick"]
+    },
+    {
+      "id": "post-028",
+      "date": "2025-05-20",
+      "category": "Tip",
+      "title": "Give agents a 'thinking' step before tool use to reduce wrong calls",
+      "summary": "Adding an explicit inner-monologue step before tool selection — 'think step by step about which tool to use' — dramatically reduces incorrect tool invocations.",
+      "body": [
+        "Agents that jump straight to tool selection often pick wrong. Adding a scratchpad-style reasoning step first forces the model to plan before acting.",
+        "**Tip:** Prefix your tool-calling prompt with a reasoning instruction.\n\n```python\nsystem_prompt = \"\"\"\nYou are a helpful agent with access to tools.\nBefore calling any tool, output your reasoning in <think> tags:\n<think>I need to find X, which means I should use tool Y because Z.</think>\nThen proceed with the tool call.\n\"\"\"\n```",
+        "This one-line addition reduced incorrect tool calls by ~40% in an internal eval. The thinking tokens are a small overhead compared to the cost of a wrong tool call and retry."
+      ],
+      "tags": ["Agents", "Prompt Engineering", "Tool Use", "Tip"]
+    },
+    {
+      "id": "post-029",
+      "date": "2025-05-18",
+      "category": "Update",
+      "title": "Pinecone now supports sparse-dense hybrid search natively",
+      "summary": "Pinecone's latest update adds built-in hybrid search — combining BM25 keyword matching with dense vector similarity in a single query, no custom code needed.",
+      "body": [
+        "Pure dense vector search misses exact keyword matches. Pure BM25 misses semantic similarity. Hybrid search combines both — and Pinecone now does it natively.",
+        "**What's new:** Set `sparse_values` alongside your dense vector in upserts, and pass both in queries.\n\n```python\nfrom pinecone_text.sparse import BM25Encoder\n\nbm25 = BM25Encoder().default()\nsparse_vec = bm25.encode_documents([chunk_text])[0]\n\nindex.upsert(vectors=[{\n    'id': chunk_id,\n    'values': dense_embedding,\n    'sparse_values': sparse_vec,\n    'metadata': {'text': chunk_text}\n}])\n\n# Query with both\nresults = index.query(\n    vector=query_dense,\n    sparse_vector=bm25.encode_queries([query])[0],\n    top_k=10\n)\n```",
+        "In benchmarks on technical documentation, hybrid search improved recall@5 from 71% to 89% over dense-only search."
+      ],
+      "tags": ["Pinecone", "RAG", "Hybrid Search", "Update"]
+    },
+    {
+      "id": "post-030",
+      "date": "2025-05-16",
+      "category": "Trick",
+      "title": "Cache LLM responses for identical inputs using a simple hash map",
+      "summary": "Many agent pipelines call the LLM with the same prompt repeatedly. A hash-based cache serves repeated calls instantly at zero cost.",
+      "body": [
+        "In agent evaluation loops, document processing pipelines, and development, the same prompt is often sent to the LLM dozens of times. Every repeat call costs money.",
+        "**Trick:** Wrap your LLM call with a hash-based cache.\n\n```python\nimport hashlib, json\nfrom functools import lru_cache\n\ncache = {}\n\ndef cached_llm_call(prompt: str, model: str = 'gpt-4o-mini') -> str:\n    key = hashlib.md5((model + prompt).encode()).hexdigest()\n    if key in cache:\n        return cache[key]\n    result = llm.invoke(prompt)\n    cache[key] = result\n    return result\n```",
+        "For persistent caching across restarts, swap the dict for Redis or SQLite. LangChain also has a built-in `set_llm_cache()` function that does this globally."
+      ],
+      "tags": ["Token Optimization", "Cost Saving", "Caching", "Python"]
+    },
+    {
+      "id": "post-031",
+      "date": "2025-05-14",
+      "category": "Tip",
+      "title": "Use parent-child chunking for better RAG context without token bloat",
+      "summary": "Retrieve small chunks for precision, but pass the parent (larger) chunk to the LLM for full context. You get the best of both worlds.",
+      "body": [
+        "Small chunks (128 tokens) retrieve precisely. Large chunks (512 tokens) provide the context the LLM needs to answer well. Parent-child chunking gives you both.",
+        "**Tip:** Use LangChain's `ParentDocumentRetriever` which stores small child chunks in the vector store but returns their large parent chunks to the LLM.\n\n```python\nfrom langchain.retrievers import ParentDocumentRetriever\nfrom langchain.storage import InMemoryStore\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter\n\nchild_splitter = RecursiveCharacterTextSplitter(chunk_size=200)\nparent_splitter = RecursiveCharacterTextSplitter(chunk_size=800)\n\nretriever = ParentDocumentRetriever(\n    vectorstore=vectorstore,\n    docstore=InMemoryStore(),\n    child_splitter=child_splitter,\n    parent_splitter=parent_splitter\n)\n```",
+        "This improved my QA system's answer completeness significantly — small chunks matched user queries precisely while parents gave the LLM enough context to form complete answers."
+      ],
+      "tags": ["RAG", "LangChain", "Chunking", "Tip"]
+    },
+    {
+      "id": "post-032",
+      "date": "2025-05-12",
+      "category": "Fix",
+      "title": "Embeddings returning cosine similarity of 1.0 for all vectors",
+      "summary": "If every document retrieves as equally similar, your vectors are likely all zeros or unnormalized. Here's how to diagnose and fix it.",
+      "body": [
+        "When a vector store returns the same top-k documents regardless of the query, the embeddings are broken — usually all-zero vectors or a configuration error.",
+        "**Fix:** Diagnose first by inspecting a raw embedding.\n\n```python\ntest_vec = embeddings.embed_query('test query')\nprint(f'Vector length: {len(test_vec)}')\nprint(f'Non-zero dims: {sum(1 for v in test_vec if v != 0)}')\nprint(f'Norm: {sum(v**2 for v in test_vec) ** 0.5:.4f}')\n```",
+        "If norm is 0 or all dims are zero, check your API key, model name, and whether the embedding provider is rate-limiting you silently. If norm is non-zero but similarity is still 1.0, your vector store may not be normalizing on upsert — check the `metric` setting (should be `cosine`, not `dotproduct` unless you normalize manually)."
+      ],
+      "tags": ["Embeddings", "Fix", "RAG", "Debugging"]
+    },
+    {
+      "id": "post-033",
+      "date": "2025-05-10",
+      "category": "Trick",
+      "title": "Use chain-of-thought prompting only when reasoning is needed — skip it otherwise",
+      "summary": "Chain-of-thought adds 100–500 tokens of output for reasoning. For simple classification or extraction tasks, it's pure overhead. Know when to skip it.",
+      "body": [
+        "Chain-of-thought (CoT) is powerful for complex reasoning but expensive for simple tasks. Adding 'think step by step' to a sentiment classifier doubles your output tokens for no gain.",
+        "**Trick:** Use a task complexity router to decide when to use CoT.\n\n```python\nSIMPLE_TASKS = ['classify', 'extract', 'reformat', 'yes_no']\nCOMPLEX_TASKS = ['reason', 'plan', 'debug', 'analyze', 'compare']\n\ndef build_prompt(task_type: str, content: str) -> str:\n    cot_instruction = 'Think step by step before answering.' if task_type in COMPLEX_TASKS else ''\n    return f'{cot_instruction}\\n\\n{content}'.strip()\n```",
+        "Applying this in a multi-task agent reduced average output tokens per call by 28% — significant at scale."
+      ],
+      "tags": ["Prompt Engineering", "Token Optimization", "Chain-of-Thought", "Trick"]
+    },
+    {
+      "id": "post-034",
+      "date": "2025-05-08",
+      "category": "Tip",
+      "title": "Design multi-agent systems with a supervisor pattern, not a flat mesh",
+      "summary": "Agents that talk to each other freely become undebuggable. Use a supervisor agent to route, delegate, and validate — keeping communication structured.",
+      "body": [
+        "A flat mesh of agents where any agent can call any other creates spaghetti workflows that are impossible to trace or debug when something goes wrong.",
+        "**Tip:** Implement a supervisor-worker pattern where one agent routes and validates, and specialist agents only execute.\n\n```python\n# Supervisor decides routing\ndef supervisor(task: str) -> str:\n    route = router_llm.invoke(f'Which agent should handle: {task}? Options: researcher, coder, writer')\n    if 'researcher' in route:\n        return researcher_agent.run(task)\n    elif 'coder' in route:\n        return coder_agent.run(task)\n    return writer_agent.run(task)\n```",
+        "This pattern maps cleanly to LangGraph — the supervisor is a node with conditional edges to each worker. Every message passes through one point, making traces readable."
+      ],
+      "tags": ["Multi-Agent", "Architecture", "LangGraph", "Tip"]
+    },
+    {
+      "id": "post-035",
+      "date": "2025-05-06",
+      "category": "Update",
+      "title": "Anthropic released Claude 3.5 Sonnet with 200K context — best for long-document agents",
+      "summary": "Claude 3.5 Sonnet now supports 200K token context windows, making it the top choice for agents that process entire codebases, contracts, or report sets.",
+      "body": [
+        "Most models cap at 128K tokens. Claude 3.5 Sonnet's 200K context means you can fit ~150,000 words — roughly an entire novel — in a single call without chunking.",
+        "**What this means for RAG:** For some use cases, you can skip chunking entirely and pass the full document to the model. This eliminates retrieval errors at the cost of higher token spend per call.",
+        "```python\nfrom anthropic import Anthropic\n\nclient = Anthropic()\nmessage = client.messages.create(\n    model='claude-3-5-sonnet-20241022',\n    max_tokens=4096,\n    messages=[{\n        'role': 'user',\n        'content': f'Analyze this entire contract and flag any unusual clauses:\\n\\n{full_contract_text}'\n    }]\n)\n```",
+        "Best used for contracts, codebases, and research papers where losing any chunk to retrieval errors is costly."
+      ],
+      "tags": ["Anthropic", "Claude", "Long Context", "Update"]
+    },
+    {
+      "id": "post-036",
+      "date": "2025-05-04",
+      "category": "Trick",
+      "title": "Dynamically build tool lists based on user intent to reduce schema token cost",
+      "summary": "Sending all 20 tools to the LLM every call wastes tokens on tool schemas the model will never use. Dynamically select the relevant 3–5 tools per request.",
+      "body": [
+        "Every tool you give an agent has a schema that gets serialized into the prompt — typically 100–300 tokens per tool. With 20 tools, that's 2,000–6,000 tokens before you've even described the task.",
+        "**Trick:** Use a fast classifier to predict which tools are relevant, then pass only those.\n\n```python\nALL_TOOLS = [web_search, calendar_tool, email_tool, crm_tool, db_query, ...]\n\ndef select_tools(user_message: str) -> list:\n    # Fast classification — use a small model or keyword match\n    relevant = keyword_router(user_message)  # returns ['web_search', 'db_query']\n    return [t for t in ALL_TOOLS if t.name in relevant]\n\nselected_tools = select_tools(user_message)\nagent = create_agent(llm, selected_tools)\n```",
+        "Cutting from 15 tools to 4 relevant ones saves ~2,000 tokens per call. At 10,000 calls/day, that's 20M tokens/day — a significant cost line."
+      ],
+      "tags": ["Agents", "Token Optimization", "Tool Use", "Trick"]
+    },
+    {
+      "id": "post-037",
+      "date": "2025-05-02",
+      "category": "Fix",
+      "title": "CrewAI agents ignoring task instructions and going off-script",
+      "summary": "CrewAI agents sometimes ignore task descriptions and make up their own objectives. The fix is explicit expected_output and tighter role definitions.",
+      "body": [
+        "When a CrewAI agent's task description is too open-ended, the model fills in the blanks — often not in the direction you want.",
+        "**Fix:** Always set `expected_output` in your Task definition. This acts as a completion criterion that keeps the agent on-target.\n\n```python\nfrom crewai import Task\n\nresearch_task = Task(\n    description='Research the top 5 competitors of {company} and their pricing models.',\n    expected_output=(\n        'A structured list of 5 competitors, each with: company name, '\n        'pricing tier names, price range, and key differentiators. '\n        'No narrative. Bullet points only.'\n    ),\n    agent=researcher\n)\n```",
+        "Vague tasks get vague outputs. Precise `expected_output` strings act as implicit evaluation criteria the agent tries to satisfy."
+      ],
+      "tags": ["CrewAI", "Fix", "Agents", "Prompt Engineering"]
+    },
+    {
+      "id": "post-038",
+      "date": "2025-04-30",
+      "category": "Tip",
+      "title": "Use streaming for agent responses to improve perceived performance",
+      "summary": "Streaming lets users see output as it generates, which makes a 10-second wait feel much shorter than a 10-second blank screen.",
+      "body": [
+        "For agents with long response times, the user experience of waiting for a complete response is significantly worse than seeing tokens stream in progressively.",
+        "**Tip:** Enable streaming on your LLM calls and pipe it through to your UI.\n\n```python\n# With OpenAI\nfor chunk in client.chat.completions.create(\n    model='gpt-4o',\n    messages=messages,\n    stream=True\n):\n    content = chunk.choices[0].delta.content\n    if content:\n        print(content, end='', flush=True)\n```",
+        "In LangChain, use `.stream()` instead of `.invoke()` on any chain or LLM. For FastAPI, return a `StreamingResponse` — this pattern makes even slow agents feel responsive."
+      ],
+      "tags": ["Agents", "Streaming", "UX", "Tip"]
+    },
+    {
+      "id": "post-039",
+      "date": "2025-04-28",
+      "category": "Trick",
+      "title": "Use sentence-level chunking for FAQ and Q&A datasets",
+      "summary": "For documents that are naturally Q&A structured, chunking by question-answer pair (not by token count) gives near-perfect retrieval alignment.",
+      "body": [
+        "Generic token-based chunking breaks FAQ documents in the worst possible way — often splitting the question from its answer across chunk boundaries.",
+        "**Trick:** For FAQ-style content, parse and chunk explicitly by Q&A pair.\n\n```python\nimport re\n\ndef chunk_faq(text: str) -> list:\n    # Match 'Q: ...' and 'A: ...' patterns\n    pattern = r'(Q:.*?)(A:.*?)(?=Q:|$)'\n    pairs = re.findall(pattern, text, re.DOTALL)\n    return [{'question': q.strip(), 'answer': a.strip(), 'chunk': q+a} for q, a in pairs]\n\nchunks = chunk_faq(faq_document)\n```",
+        "Each chunk is exactly one Q&A pair. Retrieval becomes trivially accurate because the embedding of a user's question matches the stored question directly."
+      ],
+      "tags": ["RAG", "Chunking", "Trick", "Retrieval"]
+    },
+    {
+      "id": "post-040",
+      "date": "2025-04-26",
+      "category": "Update",
+      "title": "AutoGen v0.4 released with a complete rewrite — async-first architecture",
+      "summary": "Microsoft's AutoGen v0.4 is a ground-up rewrite with native async support, a cleaner agent API, and better integration with external tools and human-in-the-loop flows.",
+      "body": [
+        "AutoGen v0.4 is not backward compatible with v0.2. The new architecture is built around an async message-passing model which makes it significantly more scalable.",
+        "**Key changes:** Agents are now defined via `AssistantAgent` and `UserProxyAgent` with explicit `on_messages` handlers, and all communication is async.\n\n```python\nfrom autogen_agentchat.agents import AssistantAgent\nfrom autogen_ext.models import OpenAIChatCompletionClient\n\nmodel_client = OpenAIChatCompletionClient(model='gpt-4o')\nagent = AssistantAgent(name='assistant', model_client=model_client)\n\n# Async conversation\nresult = await agent.run(task='What is 2+2?')\nprint(result.messages)\n```",
+        "If you're starting a new multi-agent project, build on v0.4. If you have v0.2 code in production, the migration guide is available on the AutoGen GitHub."
+      ],
+      "tags": ["AutoGen", "Multi-Agent", "Update", "Async"]
+    },
+    {
+      "id": "post-041",
+      "date": "2025-04-24",
+      "category": "Tip",
+      "title": "Add metadata filters to vector search to avoid cross-tenant data leaks",
+      "summary": "In multi-tenant RAG systems, vector similarity alone doesn't respect user boundaries. Always filter by tenant_id metadata to prevent data leakage.",
+      "body": [
+        "A common security gap in multi-tenant RAG: if you only filter by similarity, a query from User A might retrieve User B's documents if they're topically similar.",
+        "**Tip:** Always include a metadata filter on `tenant_id` (or `user_id`) in every vector search call.\n\n```python\n# Without filter — DANGEROUS in multi-tenant systems\nresults = vectorstore.similarity_search(query, k=5)\n\n# Safe — filter by tenant\nresults = vectorstore.similarity_search(\n    query,\n    k=5,\n    filter={'tenant_id': current_user.tenant_id}\n)\n```",
+        "This applies to Pinecone (use `filter=` param), Chroma (use `where=`), and Weaviate (use `where` filter). Never assume similarity search is implicitly scoped."
+      ],
+      "tags": ["RAG", "Security", "Multi-Tenant", "Best Practice"]
+    },
+    {
+      "id": "post-042",
+      "date": "2025-04-22",
+      "category": "Trick",
+      "title": "Log token usage per agent step to find where your budget is going",
+      "summary": "Most teams don't know which step in their agent pipeline consumes the most tokens. Adding per-step logging takes 10 minutes and reveals easy optimization targets.",
+      "body": [
+        "Without per-step token logging, optimizing an agent pipeline is guesswork. You might spend hours optimizing a step that uses 200 tokens while ignoring one that uses 4,000.",
+        "**Trick:** Extract token usage from the LLM response and log it per step.\n\n```python\nresponse = client.chat.completions.create(model='gpt-4o', messages=messages)\n\nusage = response.usage\nprint(f'[Step: {step_name}] Prompt: {usage.prompt_tokens} | Completion: {usage.completion_tokens} | Total: {usage.total_tokens}')\n```",
+        "After adding this to a 6-step agent, I discovered one summarization step was consuming 60% of all tokens. Replacing it with a smaller model for that step alone cut total cost by 40%."
+      ],
+      "tags": ["Token Optimization", "Observability", "Agents", "Python"]
+    },
+    {
+      "id": "post-043",
+      "date": "2025-04-20",
+      "category": "Fix",
+      "title": "Pinecone upserts silently failing on vectors with NaN values",
+      "summary": "If your embedding model returns NaN values for certain inputs (empty strings, special characters), Pinecone silently drops those upserts. Here's how to catch and fix it.",
+      "body": [
+        "Empty strings, strings with only punctuation, or very short inputs can cause embedding models to return NaN or zero vectors — and Pinecone silently discards them on upsert.",
+        "**Fix:** Validate embeddings before upserting.\n\n```python\nimport math\n\ndef is_valid_embedding(vec: list) -> bool:\n    return (\n        len(vec) > 0 and\n        not any(math.isnan(v) for v in vec) and\n        not all(v == 0 for v in vec)\n    )\n\nvalid_upserts = [\n    (id, vec, meta) for id, vec, meta in upsert_batch\n    if is_valid_embedding(vec)\n]\nif len(valid_upserts) < len(upsert_batch):\n    print(f'Dropped {len(upsert_batch) - len(valid_upserts)} invalid vectors')\nindex.upsert(vectors=valid_upserts)\n```",
+        "Also filter out empty or whitespace-only text before embedding to prevent the issue at the source."
+      ],
+      "tags": ["Pinecone", "Fix", "Embeddings", "Debugging"]
+    },
+    {
+      "id": "post-044",
+      "date": "2025-04-18",
+      "category": "Tip",
+      "title": "Use constitutional AI principles to self-critique agent outputs",
+      "summary": "Before returning a final answer, have the agent critique its own response against a checklist. This catches hallucinations and off-topic answers without human review.",
+      "body": [
+        "LLM outputs are not always accurate or on-topic. A second-pass self-critique step catches obvious errors before they reach the user.",
+        "**Tip:** After generating an answer, run a critique pass with a simple checklist prompt.\n\n```python\ncritique_prompt = \"\"\"\nReview the following answer and check:\n1. Does it directly answer the question asked?\n2. Are there any claims that seem uncertain or potentially hallucinated?\n3. Is the tone appropriate?\n\nQuestion: {question}\nAnswer: {answer}\n\nRespond with: PASS if all criteria are met, or REVISE: <specific issue> if not.\n\"\"\"\n\ncritique = llm.invoke(critique_prompt)\nif critique.startswith('REVISE'):\n    answer = llm.invoke(f'Revise this answer: {answer}\\nIssue: {critique}')\n```",
+        "This two-step generate-then-critique pattern adds one LLM call but reduces hallucination-related user complaints significantly in production."
+      ],
+      "tags": ["Agents", "Quality Control", "Prompt Engineering", "Tip"]
+    },
+    {
+      "id": "post-045",
+      "date": "2025-04-16",
+      "category": "Trick",
+      "title": "Use Pydantic models as tool input schemas for automatic validation",
+      "summary": "Defining tool inputs as Pydantic models gives you free input validation, type coercion, and auto-generated JSON schemas for the LLM — all in one step.",
+      "body": [
+        "Writing tool input validation manually is error-prone and verbose. Pydantic does it automatically and also generates the JSON schema the LLM needs to call your tool correctly.",
+        "**Trick:** Use `@tool` with a Pydantic input schema.\n\n```python\nfrom langchain_core.tools import tool\nfrom pydantic import BaseModel, Field\n\nclass SearchInput(BaseModel):\n    query: str = Field(description='The search query')\n    max_results: int = Field(default=5, ge=1, le=20, description='Number of results')\n    language: str = Field(default='en', description='Language code')\n\n@tool(args_schema=SearchInput)\ndef web_search(query: str, max_results: int = 5, language: str = 'en') -> str:\n    '''Search the web for current information.'''\n    return perform_search(query, max_results, language)\n```",
+        "The schema is automatically serialized and included in the tool description sent to the LLM. The LLM then fills fields by name, and Pydantic validates before your function runs."
+      ],
+      "tags": ["LangChain", "Pydantic", "Tool Use", "Trick"]
+    },
+    {
+      "id": "post-046",
+      "date": "2025-04-14",
+      "category": "Update",
+      "title": "Ollama now supports OpenAI-compatible API — run local models in any LangChain project",
+      "summary": "Ollama's new OpenAI-compatible endpoint means you can swap cloud LLMs for local models (Llama 3, Mistral, Phi-3) with a single URL change — no code refactoring.",
+      "body": [
+        "Ollama added an OpenAI-compatible REST API at `http://localhost:11434/v1`. Any code using the OpenAI SDK or LangChain's ChatOpenAI can now point to a local model.",
+        "**What this means:** You can run agents locally for free during development, then switch to cloud for production — without changing a line of agent code.\n\n```python\nfrom langchain_openai import ChatOpenAI\n\n# Local Llama 3 via Ollama — OpenAI-compatible endpoint\nllm = ChatOpenAI(\n    model='llama3',\n    base_url='http://localhost:11434/v1',\n    api_key='ollama'  # any string works\n)\n\n# Everything else works identically\nresponse = llm.invoke('Explain RAG in one sentence')\n```",
+        "This makes local development and testing essentially free — no API costs while iterating on prompts and agent logic."
+      ],
+      "tags": ["Ollama", "Local LLMs", "Update", "LangChain"]
+    },
+    {
+      "id": "post-047",
+      "date": "2025-04-12",
+      "category": "Tip",
+      "title": "Build agent evals before building the agent — not after",
+      "summary": "Most teams build the agent first and then write evals. Flipping this order — eval-first — forces clarity on success criteria and prevents scope creep.",
+      "body": [
+        "Without clear eval criteria, you don't know when the agent is 'done'. You keep tweaking prompts without a signal telling you if things improved or regressed.",
+        "**Tip:** Before writing any agent code, define your eval set: 20–50 input/expected-output pairs that represent real user tasks.\n\n```python\neval_cases = [\n    {'input': 'What is our refund policy?', 'expected_contains': 'within 30 days'},\n    {'input': 'How do I reset my password?', 'expected_contains': 'Settings > Security'},\n    # ... 18 more\n]\n\ndef run_eval(agent, cases):\n    results = []\n    for case in cases:\n        output = agent.run(case['input'])\n        passed = case['expected_contains'].lower() in output.lower()\n        results.append({'input': case['input'], 'passed': passed})\n    return sum(r['passed'] for r in results) / len(results)\n```",
+        "Running evals before and after every prompt change gives you a concrete accuracy score instead of vibes. This is the single practice that most improved my agent development velocity."
+      ],
+      "tags": ["Agents", "Evaluation", "Best Practice", "Tip"]
+    },
+    {
+      "id": "post-048",
+      "date": "2025-04-10",
+      "category": "Trick",
+      "title": "Compress retrieved chunks with extractive summarization before LLM injection",
+      "summary": "Raw retrieved chunks often contain boilerplate, repetition, and irrelevant sentences. Stripping these down before LLM injection cuts context tokens by 40–60%.",
+      "body": [
+        "A 500-token retrieved chunk might contain only 150 tokens of truly relevant information. Passing the full chunk wastes tokens and dilutes the signal for the LLM.",
+        "**Trick:** Use extractive summarization to pull out the most relevant sentences from each chunk before injecting.\n\n```python\nfrom sentence_transformers import CrossEncoder\n\nrelevance_scorer = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')\n\ndef extract_relevant_sentences(query: str, chunk: str, top_n: int = 3) -> str:\n    sentences = chunk.split('. ')\n    pairs = [(query, s) for s in sentences]\n    scores = relevance_scorer.predict(pairs)\n    top_sentences = [s for _, s in sorted(zip(scores, sentences), reverse=True)[:top_n]]\n    return '. '.join(top_sentences)\n```",
+        "On a 10-chunk retrieval, this cuts injected context from ~5,000 tokens to ~1,500 tokens with minimal information loss — a significant cost and quality improvement."
+      ],
+      "tags": ["RAG", "Token Optimization", "Trick", "Embeddings"]
+    },
+    {
+      "id": "post-049",
+      "date": "2025-04-08",
+      "category": "Fix",
+      "title": "LangChain LCEL chains returning empty output silently",
+      "summary": "If your LCEL chain returns an empty string or None without errors, the issue is usually a broken pipe between steps. Here's how to add visibility with pass-through inspection.",
+      "body": [
+        "LCEL chains fail silently when an intermediate step returns an unexpected type. The next step might receive `None` and produce an empty output — no exception, no warning.",
+        "**Fix:** Insert a `RunnableLambda` debug step to inspect intermediate values.\n\n```python\nfrom langchain_core.runnables import RunnableLambda\n\ndef debug(x):\n    print(f'[DEBUG] Type: {type(x)} | Value: {str(x)[:200]}')\n    return x\n\nchain = (\n    retriever\n    | RunnableLambda(debug)  # inspect what retriever returns\n    | format_docs\n    | RunnableLambda(debug)  # inspect what format_docs returns\n    | llm\n)\n```",
+        "Remove the debug steps once the chain is working. This is faster than adding print statements throughout your codebase."
+      ],
+      "tags": ["LangChain", "LCEL", "Fix", "Debugging"]
+    },
+    {
+      "id": "post-050",
+      "date": "2025-04-06",
+      "category": "Tip",
+      "title": "Use graph-based indexing for multi-hop reasoning in RAG",
+      "summary": "Standard RAG fails for questions that require connecting information across multiple documents. Graph-based RAG (GraphRAG) handles multi-hop queries natively.",
+      "body": [
+        "Questions like 'How does our CTO's previous company compare to our main competitor?' require connecting two separate documents — something vector search can't do in one hop.",
+        "**Tip:** Use Microsoft's GraphRAG or LlamaIndex's knowledge graph index for multi-hop queries.\n\n```python\nfrom llama_index.core import KnowledgeGraphIndex, SimpleDirectoryReader\n\ndocuments = SimpleDirectoryReader('./docs').load_data()\n\nkg_index = KnowledgeGraphIndex.from_documents(\n    documents,\n    max_triplets_per_chunk=10,\n)\n\nquery_engine = kg_index.as_query_engine(\n    include_text=True,\n    response_mode='tree_summarize'\n)\nresponse = query_engine.query('How did the 2023 acquisition affect our product roadmap?')\n```",
+        "Graph RAG is slower and more expensive to build than a flat vector store, but for complex analytical queries over interconnected documents, it's the right architecture."
+      ],
+      "tags": ["RAG", "GraphRAG", "LlamaIndex", "Tip"]
+    },
+    {
+      "id": "post-051",
+      "date": "2025-04-04",
+      "category": "Trick",
+      "title": "Use async tool execution to parallelize independent agent tool calls",
+      "summary": "When an agent needs to call two independent tools, running them sequentially doubles latency. Async parallel execution cuts it in half.",
+      "body": [
+        "An agent that fetches from a database AND searches the web needs both results to form its answer. Sequential execution means you wait for one before starting the other.",
+        "**Trick:** Detect independent tool calls and execute them concurrently with `asyncio.gather()`.\n\n```python\nimport asyncio\n\nasync def parallel_tools(tool_calls: list) -> list:\n    tasks = [execute_tool_async(call['name'], call['args']) for call in tool_calls]\n    results = await asyncio.gather(*tasks)\n    return list(results)\n\n# Usage\ntool_calls = [\n    {'name': 'web_search', 'args': {'query': 'latest AI news'}},\n    {'name': 'db_query', 'args': {'sql': 'SELECT * FROM reports LIMIT 5'}}\n]\nresults = asyncio.run(parallel_tools(tool_calls))\n```",
+        "For two tools with 2-second latency each, sequential takes 4 seconds. Parallel takes ~2 seconds. With 5 tools, the gap becomes even larger."
+      ],
+      "tags": ["Agents", "Async", "Performance", "Trick"]
+    },
+    {
+      "id": "post-052",
+      "date": "2025-04-02",
+      "category": "Update",
+      "title": "OpenAI Realtime API now supports function calling for voice agents",
+      "summary": "OpenAI's Realtime API now lets you define tools that the voice model can call mid-conversation — enabling voice agents that can query databases, book appointments, and trigger workflows.",
+      "body": [
+        "Previously, the Realtime API was limited to pure voice-to-voice conversation. Tool calling support turns it into a full voice agent platform.",
+        "**What's new:** Tools are defined identically to the chat completions API, but over WebSockets.\n\n```python\n# Tool definition sent during WebSocket session setup\ntool_definition = {\n    'type': 'function',\n    'name': 'get_customer_order',\n    'description': 'Get the latest order for a customer by email',\n    'parameters': {\n        'type': 'object',\n        'properties': {\n            'email': {'type': 'string', 'description': 'Customer email address'}\n        },\n        'required': ['email']\n    }\n}\n\n# Send in session.update event\nsession_config = {'tools': [tool_definition], 'tool_choice': 'auto'}\n```",
+        "The model can now ask for a customer's email, call your CRM, and respond with order details — all within a natural voice conversation, with no human in the loop."
+      ],
+      "tags": ["OpenAI", "Realtime API", "Voice Agents", "Update"]
+    },
+    {
+      "id": "post-053",
+      "date": "2025-03-30",
+      "category": "Tip",
+      "title": "Add a fallback chain when the primary LLM is rate-limited or down",
+      "summary": "A single LLM provider is a single point of failure. Build a fallback chain that switches to an alternative provider when the primary returns an error.",
+      "body": [
+        "At scale, you will hit rate limits. If your entire product depends on one LLM endpoint, a 30-second rate limit means 30 seconds of downtime for every user.",
+        "**Tip:** Use LangChain's `with_fallbacks()` to chain providers.\n\n```python\nfrom langchain_openai import ChatOpenAI\nfrom langchain_anthropic import ChatAnthropic\n\nprimary = ChatOpenAI(model='gpt-4o')\nfallback = ChatAnthropic(model='claude-3-5-sonnet-20241022')\n\nresilient_llm = primary.with_fallbacks([fallback])\n\n# Automatically uses fallback if primary throws RateLimitError or APIError\nresponse = resilient_llm.invoke('Summarize this document')\n```",
+        "You can chain multiple fallbacks: `primary.with_fallbacks([fallback_1, fallback_2])`. The chain tries each in order until one succeeds."
+      ],
+      "tags": ["LangChain", "Reliability", "Best Practice", "Tip"]
+    },
+    {
+      "id": "post-054",
+      "date": "2025-03-28",
+      "category": "Trick",
+      "title": "Use speculative decoding to speed up inference on self-hosted models",
+      "summary": "Speculative decoding uses a small draft model to propose tokens that a larger model verifies in parallel — cutting generation latency by 2–3x with identical output quality.",
+      "body": [
+        "For self-hosted models (via Ollama, vLLM, or HuggingFace), speculative decoding is the most impactful inference optimization available.",
+        "**Trick:** Enable speculative decoding in vLLM by specifying a draft model.\n\n```bash\npython -m vllm.entrypoints.openai.api_server \\\n    --model meta-llama/Llama-3-70b-instruct \\\n    --speculative-model meta-llama/Llama-3-8b-instruct \\\n    --num-speculative-tokens 5\n```",
+        "The 8B draft model proposes 5 tokens at a time. The 70B model validates them in a single forward pass — much faster than generating them one by one. On long outputs, this typically achieves 2–3x throughput improvement."
+      ],
+      "tags": ["Inference", "Performance", "vLLM", "Local LLMs"]
+    },
+    {
+      "id": "post-055",
+      "date": "2025-03-26",
+      "category": "Fix",
+      "title": "Agent giving inconsistent answers to the same question on different runs",
+      "summary": "Non-deterministic agent behavior makes testing and debugging nearly impossible. Here's a checklist of the most common causes and fixes.",
+      "body": [
+        "If your agent gives different answers to the same question, the sources of non-determinism are: temperature > 0, non-deterministic tool results, or random retrieval ordering.",
+        "**Fix checklist:**\n\n```python\n# 1. Set temperature=0 on all LLMs in the chain\nllm = ChatOpenAI(model='gpt-4o', temperature=0)\n\n# 2. Fix random seeds in vector search where supported\nresults = vectorstore.similarity_search(query, k=5)  # k is deterministic if vectors are\n\n# 3. Sort tool results before injecting into prompt\ndocs.sort(key=lambda x: x.metadata['id'])  # consistent ordering\n\n# 4. Log the exact prompt sent to the LLM for debugging\nprint('Exact prompt:', messages)\n```",
+        "After fixing all four, run the same input 10 times and check for variance. Remaining variance usually points to a non-deterministic external API your tools call."
+      ],
+      "tags": ["Agents", "Fix", "Determinism", "Debugging"]
+    },
+    {
+      "id": "post-056",
+      "date": "2025-03-24",
+      "category": "Tip",
+      "title": "Store embeddings with metadata rich enough to reconstruct the context",
+      "summary": "When you retrieve a chunk, you often need its surrounding context — document title, section, page number. Store this in metadata at index time, not retrieval time.",
+      "body": [
+        "A common mistake is indexing only the chunk text. When the chunk is retrieved, you have no idea where it came from, what document it's part of, or whether it's current.",
+        "**Tip:** Enrich metadata at index time with everything you'll need at retrieval time.\n\n```python\nfrom langchain.schema import Document\n\ndoc = Document(\n    page_content=chunk_text,\n    metadata={\n        'source': 'employee_handbook_v3.pdf',\n        'page': 14,\n        'section': 'Leave Policy',\n        'last_updated': '2025-01-15',\n        'chunk_index': 3,\n        'doc_id': 'handbook-v3'\n    }\n)\n```",
+        "At retrieval time, you can then cite the source, check freshness, filter by section, and provide document-level context to the LLM — all without any extra queries."
+      ],
+      "tags": ["RAG", "Embeddings", "Best Practice", "Tip"]
+    },
+    {
+      "id": "post-057",
+      "date": "2025-03-22",
+      "category": "Trick",
+      "title": "Use LLM-as-judge for automated agent quality evaluation",
+      "summary": "Manually reviewing agent outputs doesn't scale. Using a powerful LLM to judge the quality of another LLM's output gives you a scalable, automated eval pipeline.",
+      "body": [
+        "You can't manually review 10,000 agent responses. LLM-as-judge uses a model (usually GPT-4o) to score responses against a rubric — scalable, consistent, and surprisingly accurate.",
+        "**Trick:** Implement a simple LLM judge.\n\n```python\ndef llm_judge(question: str, answer: str, rubric: str) -> dict:\n    prompt = f\"\"\"\nQuestion: {question}\nAnswer: {answer}\nRubric: {rubric}\n\nScore the answer 1-5 on each rubric criterion. Respond as JSON:\n{{\"relevance\": N, \"accuracy\": N, \"completeness\": N, \"reasoning\": \"...\"}}\n\"\"\"\n    result = judge_llm.invoke(prompt)\n    return json.loads(result)\n\nscore = llm_judge(\n    question='What is our cancellation policy?',\n    answer=agent_response,\n    rubric='1=wrong/missing, 5=accurate, complete, and cites policy correctly'\n)\n```",
+        "Run this across your entire eval set nightly. Track score trends over time to catch regressions caused by prompt changes or model updates."
+      ],
+      "tags": ["Evaluation", "LLM-as-Judge", "Agents", "Trick"]
+    },
+    {
+      "id": "post-058",
+      "date": "2025-03-20",
+      "category": "Update",
+      "title": "Google released Gemini 2.0 Flash — fastest long-context model available",
+      "summary": "Gemini 2.0 Flash offers a 1M token context window at very low cost and high speed — making it the best option for bulk document processing and long-context extraction tasks.",
+      "body": [
+        "Gemini 2.0 Flash supports up to 1 million input tokens, processes them faster than any comparable model, and is priced lower than GPT-4o-mini for most workloads.",
+        "**Best use cases:** Processing entire codebases, analyzing long transcripts, or extracting structured data from large PDFs — tasks where you'd otherwise need chunking.",
+        "```python\nfrom langchain_google_genai import ChatGoogleGenerativeAI\n\nllm = ChatGoogleGenerativeAI(\n    model='gemini-2.0-flash',\n    google_api_key=GOOGLE_API_KEY\n)\n\n# Pass an entire codebase as context\nresponse = llm.invoke(f'Find all potential SQL injection vulnerabilities in:\\n\\n{entire_codebase}')\n```",
+        "At 1M context, you can pass 750,000 words in a single call. For tasks where losing information to chunking is costly, this changes the architecture entirely."
+      ],
+      "tags": ["Gemini", "Google", "Long Context", "Update"]
+    },
+    {
+      "id": "post-059",
+      "date": "2025-03-18",
+      "category": "Tip",
+      "title": "Implement exponential backoff for all LLM API calls in production",
+      "summary": "Rate limit errors are inevitable in production. Without retry logic, they become user-facing errors. Exponential backoff handles them gracefully.",
+      "body": [
+        "LLM APIs rate-limit by tokens-per-minute, requests-per-minute, or both. Without retry logic, any spike in traffic causes cascading failures.",
+        "**Tip:** Use the `tenacity` library for clean retry logic with exponential backoff.\n\n```python\nfrom tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type\nfrom openai import RateLimitError\n\n@retry(\n    retry=retry_if_exception_type(RateLimitError),\n    wait=wait_exponential(multiplier=1, min=2, max=60),\n    stop=stop_after_attempt(5)\n)\ndef call_llm(messages: list) -> str:\n    return client.chat.completions.create(\n        model='gpt-4o',\n        messages=messages\n    )\n```",
+        "This retries up to 5 times with delays of 2, 4, 8, 16, 32 seconds. The exponential backoff gives the API time to recover from rate limiting without overwhelming it."
+      ],
+      "tags": ["Production", "Reliability", "Python", "Tip"]
+    },
+    {
+      "id": "post-060",
+      "date": "2025-03-16",
+      "category": "Trick",
+      "title": "Use task decomposition to break complex agent goals into verifiable subtasks",
+      "summary": "Asking an agent to do a complex 5-step task in one shot leads to errors that compound. Breaking it into verifiable subtasks with checkpoints prevents error propagation.",
+      "body": [
+        "Complex single-shot tasks let errors compound silently — the agent gets step 2 wrong, and steps 3–5 all build on that wrong foundation.",
+        "**Trick:** Have a planner agent decompose the goal, then execute and verify each subtask independently.\n\n```python\ndef decompose_task(goal: str, llm) -> list:\n    plan = llm.invoke(\n        f'Break this goal into 3-5 concrete, verifiable subtasks.\\n'\n        f'Each subtask must have a clear success criterion.\\n'\n        f'Goal: {goal}\\n'\n        f'Respond as a JSON list: [{{\"task\": ..., \"success_criterion\": ...}}]'\n    )\n    return json.loads(plan)\n\ndef execute_with_verification(subtasks: list, executor_agent):\n    results = []\n    for subtask in subtasks:\n        result = executor_agent.run(subtask['task'])\n        verified = verify_step(result, subtask['success_criterion'])\n        if not verified:\n            result = executor_agent.run(f'Retry: {subtask[\"task\"]}. Previous attempt failed: {result}')\n        results.append(result)\n    return results\n```",
+        "This plan-then-execute-then-verify loop is the foundation of reliable agent systems. Each checkpoint catches errors before they contaminate the next step."
+      ],
+      "tags": ["Agents", "Architecture", "Trick", "Multi-Agent"]
+    },
+    {
+      "id": "post-061",
+      "date": "2025-03-14",
+      "category": "Tip",
+      "title": "Use delta streaming to reduce time-to-first-token in user-facing agents",
+      "summary": "Time-to-first-token (TTFT) matters more than total latency for user experience. Streaming with incremental rendering gets something on screen in under 500ms.",
+      "body": [
+        "A 5-second wait with nothing on screen feels broken. A 5-second wait where text starts appearing in 300ms feels fast. TTFT is the UX metric that matters most.",
+        "**Tip:** Combine server-sent events (SSE) in FastAPI with client-side streaming render.\n\n```python\nfrom fastapi import FastAPI\nfrom fastapi.responses import StreamingResponse\n\napp = FastAPI()\n\n@app.post('/chat')\nasync def chat(message: str):\n    async def generate():\n        stream = client.chat.completions.create(\n            model='gpt-4o', messages=[{'role': 'user', 'content': message}], stream=True\n        )\n        for chunk in stream:\n            delta = chunk.choices[0].delta.content\n            if delta:\n                yield f'data: {delta}\\n\\n'\n    return StreamingResponse(generate(), media_type='text/event-stream')\n```",
+        "On the frontend, handle `EventSource` and append each delta to the DOM as it arrives. This pattern is how ChatGPT, Claude.ai, and every major AI chat UI works."
+      ],
+      "tags": ["Streaming", "FastAPI", "UX", "Tip"]
+    },
+    {
+      "id": "post-062",
+      "date": "2025-03-12",
+      "category": "Fix",
+      "title": "Chroma vector store getting slower over time — missing index rebuild",
+      "summary": "Chroma's HNSW index doesn't auto-optimize after bulk inserts. Query performance degrades significantly after 10K+ vectors without a manual index rebuild.",
+      "body": [
+        "After inserting 50,000+ vectors into a local Chroma collection, query times that started at 20ms can creep up to 500ms+ because the HNSW index isn't automatically rebuilt.",
+        "**Fix:** Periodically rebuild the index by recreating the collection from scratch with the existing data.\n\n```python\nimport chromadb\n\ndef rebuild_chroma_index(collection_name: str, client: chromadb.Client):\n    old_collection = client.get_collection(collection_name)\n    # Export all data\n    data = old_collection.get(include=['embeddings', 'documents', 'metadatas'])\n    # Delete and recreate\n    client.delete_collection(collection_name)\n    new_collection = client.create_collection(collection_name)\n    # Reimport in batches\n    batch_size = 1000\n    for i in range(0, len(data['ids']), batch_size):\n        new_collection.add(\n            ids=data['ids'][i:i+batch_size],\n            embeddings=data['embeddings'][i:i+batch_size],\n            documents=data['documents'][i:i+batch_size],\n            metadatas=data['metadatas'][i:i+batch_size]\n        )\n```",
+        "Schedule this rebuild during low-traffic periods. For production at scale, consider migrating to Pinecone or Weaviate which handle index optimization automatically."
+      ],
+      "tags": ["Chroma", "Fix", "Performance", "Vector Store"]
+    },
+    {
+      "id": "post-063",
+      "date": "2025-03-10",
+      "category": "Trick",
+      "title": "Use adaptive retrieval — query vector store only when needed",
+      "summary": "Not every user question requires a RAG lookup. Adding a routing step that skips retrieval for general questions saves latency and reduces irrelevant context injection.",
+      "body": [
+        "A RAG pipeline that retrieves on every query injects potentially irrelevant context for general questions like 'What is machine learning?' — wasting tokens and sometimes confusing the model.",
+        "**Trick:** Add a fast routing step to classify whether retrieval is needed.\n\n```python\ndef needs_retrieval(query: str, llm) -> bool:\n    verdict = llm.invoke(\n        f'Does answering this question require looking up specific company documents? '\n        f'Reply only YES or NO.\\n\\nQuestion: {query}',\n    )\n    return 'YES' in verdict.upper()\n\ndef smart_answer(query: str):\n    if needs_retrieval(query):\n        docs = retriever.get_relevant_documents(query)\n        return rag_chain.invoke({'context': docs, 'question': query})\n    return direct_llm.invoke(query)\n```",
+        "Use a small, fast model (gpt-4o-mini) for the routing step. The latency overhead is ~100ms but saves 500ms+ on queries that don't need retrieval."
+      ],
+      "tags": ["RAG", "Agents", "Token Optimization", "Trick"]
+    },
+    {
+      "id": "post-064",
+      "date": "2025-03-08",
+      "category": "Tip",
+      "title": "Version your prompts like code — use git and semantic versioning",
+      "summary": "Prompts are code. A random edit to a production system prompt can silently break agent behavior. Treat prompts with the same discipline as code: version control, changelog, rollback.",
+      "body": [
+        "Prompt changes are the #1 cause of silent regressions in AI systems. 'I just tweaked the wording a little' can completely change agent behavior in edge cases.",
+        "**Tip:** Store prompts in version-controlled files with semantic versioning, not hardcoded strings.\n\n```python\n# prompts/system_v2.1.0.txt\n# CHANGELOG: v2.1.0 - Added explicit instruction to cite sources\n# v2.0.0 - Rewrote persona section\n\ndef load_prompt(name: str, version: str) -> str:\n    path = f'prompts/{name}_v{version}.txt'\n    with open(path) as f:\n        return f.read()\n\nsystem_prompt = load_prompt('system', '2.1.0')\n```",
+        "Tag releases in git. When an agent starts behaving oddly, `git diff` shows exactly what changed and `git checkout` can roll back instantly — just like code."
+      ],
+      "tags": ["Prompt Engineering", "Best Practice", "DevOps", "Tip"]
+    },
+    {
+      "id": "post-065",
+      "date": "2025-03-06",
+      "category": "Trick",
+      "title": "Use text compression (LLMLingua) to fit more context in fewer tokens",
+      "summary": "LLMLingua is a Microsoft tool that compresses long prompts by removing unnecessary words — achieving 5–20x compression with minimal quality loss.",
+      "body": [
+        "When you're hitting context limits, the standard move is to remove content. LLMLingua takes a smarter approach: compress the existing content without removing information.",
+        "**Trick:** Use LLMLingua to compress retrieved RAG context before injection.\n\n```python\nfrom llmlingua import PromptCompressor\n\ncompressor = PromptCompressor(\n    model_name='microsoft/llmlingua-2-xlm-roberta-large-meetingbank',\n    use_llmlingua2=True\n)\n\ncompressed = compressor.compress_prompt(\n    context_text,\n    rate=0.3,  # keep 30% of original tokens\n    force_tokens=['\\n', '?']  # always keep these\n)\n\nprint(f'Original: {compressed[\"origin_tokens\"]} tokens')\nprint(f'Compressed: {compressed[\"compressed_tokens\"]} tokens')\n```",
+        "At 0.3 rate, 3,000 tokens of context becomes ~900 tokens. In practice, RAG quality drops by 5–10% — an acceptable trade-off when you're hard up against context limits."
+      ],
+      "tags": ["Token Optimization", "LLMLingua", "RAG", "Trick"]
     }
   ]
 }
